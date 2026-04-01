@@ -1,0 +1,15 @@
+ARG VERSION=9
+FROM rockylinux:${VERSION}
+
+RUN dnf install -y \
+        gcc \
+        clang \
+        clang-tools-extra \
+        cmake \
+        make \
+        git \
+        valgrind \
+        doxygen \
+    && dnf clean all
+
+WORKDIR /app

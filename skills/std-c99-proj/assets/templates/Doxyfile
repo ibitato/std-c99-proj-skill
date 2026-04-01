@@ -1,0 +1,11 @@
+PROJECT_NAME           = "C99 Project"
+OUTPUT_DIRECTORY       = docs
+INPUT                  = src include
+RECURSIVE              = YES
+GENERATE_LATEX         = NO
+GENERATE_HTML          = YES
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+HAVE_DOT               = NO
+OPTIMIZE_OUTPUT_FOR_C  = YES
