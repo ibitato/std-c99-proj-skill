@@ -1,9 +1,9 @@
 /*!
  * \file mem_arena.h
- * \brief Memory arena allocator — pure ANSI C99.
+ * \brief Memory arena allocator — pure ANSI C99, hardened.
  *
- * Single allocation backing buffer. All sub-allocations are bump-pointer.
- * Free everything at once with mem_arena_free().
+ * Single allocation backing buffer. All sub-allocations are bump-pointer
+ * with natural alignment. Free everything at once with mem_arena_free().
  */
 
 #ifndef MEM_ARENA_H
@@ -11,23 +11,26 @@
 
 #include <stddef.h>
 
+/** \brief Natural alignment for the platform (covers double, pointer, long long). */
+#define MEM_ARENA_ALIGN sizeof(union { double d; void *p; long long ll; })
+
 typedef struct {
     char  *memory;  /**< Backing buffer. */
     size_t size;    /**< Total capacity in bytes. */
-    size_t used;    /**< Bytes currently allocated. */
+    size_t used;    /**< Bytes currently allocated (always aligned). */
 } MemArena;
 
 /**
  * \brief Initialize an arena with the given capacity.
- * \param arena Pointer to arena struct.
+ * \param arena Pointer to arena struct (must not already be initialized).
  * \param size  Capacity in bytes (must be > 0).
  * \return 0 on success, -1 on failure.
  */
 int mem_arena_init(MemArena *arena, size_t size);
 
 /**
- * \brief Allocate \p size bytes from the arena.
- * \return Pointer to allocated block, or NULL if out of space.
+ * \brief Allocate \p size bytes from the arena (aligned to MEM_ARENA_ALIGN).
+ * \return Pointer to allocated block, or NULL on failure.
  */
 void *mem_arena_alloc(MemArena *arena, size_t size);
 
@@ -37,7 +40,7 @@ void *mem_arena_alloc(MemArena *arena, size_t size);
 void mem_arena_reset(MemArena *arena);
 
 /**
- * \brief Free the backing buffer and zero the struct.
+ * \brief Free the backing buffer and zero the struct. Idempotent.
  */
 void mem_arena_free(MemArena *arena);
 

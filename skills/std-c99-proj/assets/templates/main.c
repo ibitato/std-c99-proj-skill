@@ -13,6 +13,7 @@ int main(void) {
     MemArena arena;
     int i;
 
+    arena.memory = NULL;
     if (mem_arena_init(&arena, ARENA_SIZE) != 0) {
         (void)fprintf(stderr, "Error: arena init failed\n");
         return 1;
