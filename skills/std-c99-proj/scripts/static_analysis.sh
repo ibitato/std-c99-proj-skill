@@ -3,6 +3,7 @@ set -euo pipefail
 
 # static_analysis.sh <target>
 # Runs clang-tidy inside the target container on all C source files.
+# Uses build/<target>/ for compile_commands.json.
 
 TARGET="${1:-}"
 
@@ -24,6 +25,7 @@ case "$TARGET" in
 esac
 
 IMAGE_TAG="std-c99-proj:${TARGET}"
+BUILD_DIR="build/${TARGET}"
 
 if ! [ -f "$CFILE" ]; then
     echo "Error: $CFILE not found. Run init first."
@@ -33,13 +35,14 @@ fi
 echo "==> Building image ${IMAGE_TAG}..."
 podman build -t "$IMAGE_TAG" --build-arg "$BUILD_ARG" -f "$CFILE" .
 
-echo "==> Generating compile_commands.json..."
+echo "==> Generating compile_commands.json in ${BUILD_DIR}/..."
+mkdir -p "$BUILD_DIR"
 podman run --rm -v "$(pwd):/app:Z" -w /app "$IMAGE_TAG" \
-    bash -c "cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    bash -c "cmake -B ${BUILD_DIR} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 
 echo "==> Running clang-tidy for ${TARGET}..."
 podman run --rm -v "$(pwd):/app:Z" -w /app "$IMAGE_TAG" \
-    bash -c 'find src include -name "*.c" -o -name "*.h" | \
-             xargs clang-tidy -p build --warnings-as-errors="*"'
+    bash -c "find src include -name '*.c' -o -name '*.h' | \
+             xargs clang-tidy -p ${BUILD_DIR} --warnings-as-errors='*'"
 
 echo "==> Static analysis OK: ${TARGET}"

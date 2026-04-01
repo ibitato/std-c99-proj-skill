@@ -3,6 +3,7 @@ set -euo pipefail
 
 # docs.sh <target>
 # Generates Doxygen documentation inside the target container.
+# Output goes to docs/<target>/ on the host.
 
 TARGET="${1:-}"
 
@@ -24,6 +25,7 @@ case "$TARGET" in
 esac
 
 IMAGE_TAG="std-c99-proj:${TARGET}"
+DOCS_DIR="docs/${TARGET}"
 
 if ! [ -f "$CFILE" ]; then
     echo "Error: $CFILE not found. Run init first."
@@ -33,7 +35,9 @@ fi
 echo "==> Building image ${IMAGE_TAG}..."
 podman build -t "$IMAGE_TAG" --build-arg "$BUILD_ARG" -f "$CFILE" .
 
-echo "==> Generating documentation..."
-podman run --rm -v "$(pwd):/app:Z" -w /app "$IMAGE_TAG" doxygen Doxyfile
+echo "==> Generating documentation -> ${DOCS_DIR}/"
+mkdir -p "$DOCS_DIR"
+podman run --rm -v "$(pwd):/app:Z" -w /app "$IMAGE_TAG" \
+    bash -c "sed 's|^OUTPUT_DIRECTORY.*|OUTPUT_DIRECTORY = ${DOCS_DIR}|' Doxyfile | doxygen -"
 
-echo "==> Documentation generated in docs/"
+echo "==> Documentation generated in ${DOCS_DIR}/"

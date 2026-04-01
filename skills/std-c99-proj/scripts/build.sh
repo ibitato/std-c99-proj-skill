@@ -3,6 +3,7 @@ set -euo pipefail
 
 # build.sh <target> [Debug|Release]
 # Builds the project inside a Podman container for the given target.
+# Output goes to build/<target>/ on the host.
 
 TARGET="${1:-}"
 BUILD_TYPE="${2:-Debug}"
@@ -28,6 +29,7 @@ case "$TARGET" in
 esac
 
 IMAGE_TAG="std-c99-proj:${TARGET}"
+BUILD_DIR="build/${TARGET}"
 
 if ! [ -f "$CFILE" ]; then
     echo "Error: $CFILE not found. Run init first."
@@ -37,8 +39,10 @@ fi
 echo "==> Building image ${IMAGE_TAG}..."
 podman build -t "$IMAGE_TAG" --build-arg "$BUILD_ARG" -f "$CFILE" .
 
-echo "==> Compiling (${BUILD_TYPE}) for ${TARGET}..."
+echo "==> Compiling (${BUILD_TYPE}) for ${TARGET} -> ${BUILD_DIR}/"
+mkdir -p "$BUILD_DIR"
 podman run --rm -v "$(pwd):/app:Z" -w /app "$IMAGE_TAG" \
-    bash -c "cmake -B build -DCMAKE_BUILD_TYPE=${BUILD_TYPE} && cmake --build build"
+    bash -c "cmake -B ${BUILD_DIR} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} && cmake --build ${BUILD_DIR}"
 
 echo "==> Build OK: ${TARGET} (${BUILD_TYPE})"
+echo "    Binary: ${BUILD_DIR}/c99_project"

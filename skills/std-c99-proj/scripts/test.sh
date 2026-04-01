@@ -3,6 +3,7 @@ set -euo pipefail
 
 # test.sh <target>
 # Builds with tests enabled, runs ctest, then Valgrind on each test binary.
+# Output goes to build/<target>/ on the host.
 
 TARGET="${1:-}"
 
@@ -24,6 +25,7 @@ case "$TARGET" in
 esac
 
 IMAGE_TAG="std-c99-proj:${TARGET}"
+BUILD_DIR="build/${TARGET}"
 
 if ! [ -f "$CFILE" ]; then
     echo "Error: $CFILE not found. Run init first."
@@ -33,27 +35,28 @@ fi
 echo "==> Building image ${IMAGE_TAG}..."
 podman build -t "$IMAGE_TAG" --build-arg "$BUILD_ARG" -f "$CFILE" .
 
-echo "==> Compiling tests for ${TARGET}..."
+echo "==> Compiling tests for ${TARGET} -> ${BUILD_DIR}/"
+mkdir -p "$BUILD_DIR"
 podman run --rm -v "$(pwd):/app:Z" -w /app "$IMAGE_TAG" \
-    bash -c "cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON && cmake --build build"
+    bash -c "cmake -B ${BUILD_DIR} -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON && cmake --build ${BUILD_DIR}"
 
 echo "==> Running ctest..."
 podman run --rm -v "$(pwd):/app:Z" -w /app "$IMAGE_TAG" \
-    bash -c "ctest --test-dir build --output-on-failure"
+    bash -c "ctest --test-dir ${BUILD_DIR} --output-on-failure"
 
 echo "==> Running Valgrind on test binaries..."
 podman run --rm -v "$(pwd):/app:Z" -w /app "$IMAGE_TAG" \
-    bash -c '
+    bash -c "
         FAIL=0
-        for bin in build/test_*; do
-            [ -x "$bin" ] || continue
-            echo "--- valgrind: $bin ---"
+        for bin in ${BUILD_DIR}/test_*; do
+            [ -x \"\$bin\" ] || continue
+            echo \"--- valgrind: \$bin ---\"
             if ! valgrind --leak-check=full --errors-for-leak-kinds=all \
-                          --error-exitcode=1 "$bin"; then
+                          --error-exitcode=1 \"\$bin\"; then
                 FAIL=1
             fi
         done
-        exit $FAIL
-    '
+        exit \$FAIL
+    "
 
 echo "==> Tests + Valgrind OK: ${TARGET}"
