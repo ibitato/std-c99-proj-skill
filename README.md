@@ -147,6 +147,10 @@ See [`references/ARENA_API.md`](skills/std-c99-proj/references/ARENA_API.md) for
 - [Git](https://git-scm.com/) — version control
 - [Pi](https://github.com/badlogic/pi-mono) — AI coding agent
 
+## Documentation
+
+📖 **[User Manual](MANUAL.md)** — complete guide from installation to advanced usage (beginner / intermediate / advanced).
+
 ## Contributing
 
 Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a pull request.
