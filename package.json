@@ -1,6 +1,6 @@
 {
   "name": "std-c99-proj-skill",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "Pi skill for pure ANSI C99 projects with memory arena, containerized builds, Valgrind, and static analysis.",
   "keywords": [
     "pi-package",

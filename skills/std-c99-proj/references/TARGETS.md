@@ -2,49 +2,43 @@
 
 ## Target Catalog
 
-| Target       | Family | Base Image          | Package Manager | Notes                          |
-|--------------|--------|---------------------|-----------------|--------------------------------|
-| `rhel8`      | RHEL   | `rockylinux:8`      | `dnf`           | RHEL 8 / Alma 8 / Rocky 8     |
-| `rhel9`      | RHEL   | `rockylinux:9`      | `dnf`           | RHEL 9 / Alma 9 / Rocky 9     |
-| `rhel10`     | RHEL   | `rockylinux:10`     | `dnf`           | RHEL 10 / Alma 10 / Rocky 10  |
-| `debian11`   | Debian | `debian:bullseye`   | `apt-get`       | Debian 11 Bullseye             |
-| `debian12`   | Debian | `debian:bookworm`   | `apt-get`       | Debian 12 Bookworm             |
-| `ubuntu2204` | Debian | `ubuntu:22.04`      | `apt-get`       | Ubuntu 22.04 LTS Jammy         |
-| `ubuntu2404` | Debian | `ubuntu:24.04`      | `apt-get`       | Ubuntu 24.04 LTS Noble         |
+| Target       | Family | Base Image          | GCC  | `-fanalyzer` |
+|--------------|--------|---------------------|------|:------------:|
+| `rhel8`      | RHEL   | `rockylinux:8`      | 8.x  | — |
+| `rhel9`      | RHEL   | `rockylinux:9`      | 11.x | ✅ |
+| `rhel10`     | RHEL   | `quay.io/rockylinux/rockylinux:10` | 14.x | ✅ |
+| `debian11`   | Debian | `debian:bullseye`   | 10.x | ✅ |
+| `debian12`   | Debian | `debian:bookworm`   | 12.x | ✅ |
+| `ubuntu2204` | Ubuntu | `ubuntu:22.04`      | 11.x | ✅ |
+| `ubuntu2404` | Ubuntu | `ubuntu:24.04`      | 13.x | ✅ |
 
 ## Containerfiles
 
 Two parametrized Containerfiles cover all targets:
 
-- `containers/Containerfile.rhel` — uses `ARG VERSION` (8, 9, or 10)
-- `containers/Containerfile.debian` — uses `ARG BASE_IMAGE` (debian:X or ubuntu:X)
+- `containers/Containerfile.rhel` — uses `ARG BASE_IMAGE`
+- `containers/Containerfile.debian` — uses `ARG BASE_IMAGE`
 
 ## Installed Tools (all targets)
 
-| Tool          | Purpose                        |
-|---------------|--------------------------------|
-| `gcc`         | Primary C compiler             |
-| `clang`       | Secondary compiler + tooling   |
-| `clang-tidy`  | Static analysis                |
-| `cmake`       | Build system                   |
-| `make`        | Build backend                  |
-| `git`         | Version control                |
-| `valgrind`    | Memory error detection         |
-| `doxygen`     | Documentation generation       |
+`gcc`, `clang`, `clang-tidy`, `cmake`, `make`, `git`, `valgrind`, `doxygen`.
+
+## Output Directories
+
+Each target gets its own output directory:
+
+```
+build/<target>/     # binaries, object files, test binaries
+docs/<target>/      # Doxygen HTML
+```
+
+Multiple targets coexist without overwriting each other.
 
 ## Usage
 
 ```bash
-# Build for a specific target
-bash SKILL_DIR/scripts/build.sh rhel9 Debug
-bash SKILL_DIR/scripts/build.sh ubuntu2404 Release
-
-# Test on a specific target
-bash SKILL_DIR/scripts/test.sh debian12
-
-# Static analysis on a specific target
-bash SKILL_DIR/scripts/static_analysis.sh rhel9
+bash SKILL_DIR/scripts/build.sh rhel9 Debug       # -> build/rhel9/
+bash SKILL_DIR/scripts/build.sh ubuntu2404 Release # -> build/ubuntu2404/
+bash SKILL_DIR/scripts/test.sh debian12            # -> build/debian12/
+bash SKILL_DIR/scripts/docs.sh rhel9               # -> docs/rhel9/
 ```
-
-Images are cached locally by Podman. First build pulls the base image and
-installs packages; subsequent builds reuse the cached image.

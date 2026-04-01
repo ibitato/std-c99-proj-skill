@@ -6,7 +6,7 @@
 
 **Professional pure ANSI C99 development framework**
 
-v2.0.0
+v2.4.0
 
 ---
 
@@ -98,7 +98,8 @@ alias podman=docker
 ### Install the skill
 
 ```bash
-pi install git:github.com/ibitato/std-c99-proj-skill
+pi install npm:std-c99-proj-skill          # from npm (recommended)
+pi install git:github.com/ibitato/std-c99-proj-skill   # from git
 ```
 
 ### Verify
@@ -118,7 +119,8 @@ User packages:
 ### Pin to a specific version
 
 ```bash
-pi install git:github.com/ibitato/std-c99-proj-skill@v2.0.0
+pi install npm:std-c99-proj-skill@2.4.0
+pi install git:github.com/ibitato/std-c99-proj-skill@v2.4.0
 ```
 
 ### Update
@@ -156,7 +158,7 @@ Pi will run `init_project.sh`, creating the full project scaffold with source fi
 Build for RHEL 9
 ```
 
-Pi will run `build.sh rhel9 Debug`, compiling your code inside a Rocky Linux 9 container.
+Pi will run `build.sh rhel9 Debug`, compiling your code inside a Rocky Linux 9 container. Output goes to `build/rhel9/`.
 
 ### Step 4 — Test
 
@@ -172,7 +174,7 @@ All heap blocks were freed -- no leaks are possible
 ERROR SUMMARY: 0 errors from 0 contexts
 ```
 
-**Congratulations** — you have a working, Valgrind-clean C99 project.
+**Congratulations** — you have a working, Valgrind-clean C99 project with per-target output in `build/rhel9/`.
 
 ---
 
@@ -180,15 +182,15 @@ ERROR SUMMARY: 0 errors from 0 contexts
 
 All builds run inside Podman containers. You choose the target; the skill handles the rest.
 
-| Target | Distribution | Base Image | GCC Version |
-|--------|-------------|------------|-------------|
-| `rhel8` | RHEL 8 / Rocky 8 / Alma 8 | `rockylinux:8` | 8.x |
-| `rhel9` | RHEL 9 / Rocky 9 / Alma 9 | `rockylinux:9` | 11.x |
-| `rhel10` | RHEL 10 / Rocky 10 / Alma 10 | `quay.io/rockylinux/rockylinux:10` | 14.x |
-| `debian11` | Debian 11 Bullseye | `debian:bullseye` | 10.x |
-| `debian12` | Debian 12 Bookworm | `debian:bookworm` | 12.x |
-| `ubuntu2204` | Ubuntu 22.04 LTS Jammy | `ubuntu:22.04` | 11.x |
-| `ubuntu2404` | Ubuntu 24.04 LTS Noble | `ubuntu:24.04` | 13.x |
+| Target | Distribution | Base Image | GCC | `-fanalyzer` |
+|--------|-------------|------------|-----|:------------:|
+| `rhel8` | RHEL 8 / Rocky 8 / Alma 8 | `rockylinux:8` | 8.x | — |
+| `rhel9` | RHEL 9 / Rocky 9 / Alma 9 | `rockylinux:9` | 11.x | ✅ |
+| `rhel10` | RHEL 10 / Rocky 10 / Alma 10 | `quay.io/rockylinux/rockylinux:10` | 14.x | ✅ |
+| `debian11` | Debian 11 Bullseye | `debian:bullseye` | 10.x | ✅ |
+| `debian12` | Debian 12 Bookworm | `debian:bookworm` | 12.x | ✅ |
+| `ubuntu2204` | Ubuntu 22.04 LTS Jammy | `ubuntu:22.04` | 11.x | ✅ |
+| `ubuntu2404` | Ubuntu 24.04 LTS Noble | `ubuntu:24.04` | 13.x | ✅ |
 
 Each container includes: `gcc`, `clang`, `clang-tidy`, `cmake`, `make`, `git`, `valgrind`, `doxygen`.
 
@@ -214,7 +216,8 @@ bash <SKILL_DIR>/scripts/init_project.sh
 
 ```
 my-project/
-├── CMakeLists.txt          # Build system (C99 strict)
+├── AGENTS.md               # AI agent rules (auto-loaded)
+├── CMakeLists.txt          # C99 strict, -fanalyzer (GCC≥10), Debug/Release
 ├── Doxyfile                # Doxygen configuration
 ├── .gitignore
 ├── containers/
@@ -222,10 +225,10 @@ my-project/
 │   └── Containerfile.debian
 ├── src/
 │   ├── main.c              # Entry point
-│   ├── mem_arena.c         # Arena allocator
+│   ├── mem_arena.c         # Hardened arena allocator
 │   └── utils.c             # Utilities
 ├── include/
-│   ├── mem_arena.h         # Arena API
+│   ├── mem_arena.h         # Arena API (aligned, overflow-safe)
 │   └── utils.h             # Utility headers
 └── tests/
     └── test_arena.c        # 27 assertions
@@ -252,14 +255,18 @@ bash <SKILL_DIR>/scripts/build.sh <target> [Debug|Release]
 
 **Examples:**
 ```bash
-bash <SKILL_DIR>/scripts/build.sh rhel9 Debug      # Debug build
-bash <SKILL_DIR>/scripts/build.sh ubuntu2404 Release # Optimized build
+bash <SKILL_DIR>/scripts/build.sh rhel9 Debug      # -> build/rhel9/
+bash <SKILL_DIR>/scripts/build.sh ubuntu2404 Release # -> build/ubuntu2404/
 ```
+
+Multiple targets coexist — each gets its own `build/<target>/` directory.
 
 **Compiler flags (always applied):**
 ```
--std=c99 -pedantic -Wall -Wextra -Werror -Wconversion -Wsign-conversion -Wshadow -Wfloat-conversion
+-std=c99 -pedantic -Wall -Wextra -Werror -Wconversion -Wsign-conversion -Wshadow -Wfloat-conversion -fstack-protector-strong
 ```
+
+Debug adds: `-O0 -g3 -fanalyzer` (GCC ≥ 10). Release adds: `-O2 -D_FORTIFY_SOURCE=2 -fPIE`.
 
 Any warning is a build error. No exceptions.
 
@@ -320,7 +327,7 @@ Generate documentation for rhel9
 bash <SKILL_DIR>/scripts/docs.sh <target>
 ```
 
-Output goes to `docs/html/index.html`.
+Output goes to `docs/<target>/html/index.html`.
 
 ---
 

@@ -1,14 +1,12 @@
 ---
 name: std-c99-proj
 description: >
-  Professional pure ANSI C99 project framework with memory arena allocation,
-  containerized builds via Podman, mandatory Valgrind memory analysis, and
-  clang-tidy static analysis. Enforces strict rules: no warnings (-Werror),
-  no recursion (iteration only), no memory leaks (arena pattern), and git
-  version control. Supports RHEL 8/9/10 and Debian 11/12 and Ubuntu 22.04/24.04
-  build targets. Use when the user wants to create, build, test, or analyze
-  a pure C99 project, or mentions memory arena, C99, Valgrind, or containerized
-  C builds.
+  Professional pure ANSI C99 project framework with hardened memory arena,
+  containerized builds via Podman, mandatory Valgrind, -fanalyzer (GCC>=10),
+  and clang-tidy. Enforces: -Werror, no recursion, no leaks, arena-only memory.
+  Per-target output in build/<target>/. Generates AGENTS.md for auto-rules.
+  Targets: RHEL 8/9/10, Debian 11/12, Ubuntu 22.04/24.04.
+  Use when the user wants to create, build, test, or analyze a pure C99 project.
 license: MIT
 compatibility: Requires podman and git. Targets run inside containers.
 ---
@@ -16,31 +14,32 @@ compatibility: Requires podman and git. Targets run inside containers.
 # std-c99-proj — Pure ANSI C99 + Memory Arena Framework
 
 Professional framework for pure ANSI C99 projects. All builds, tests, and
-analysis run inside Podman containers for reproducibility.
+analysis run inside Podman containers for reproducibility. Output is per-target
+in `build/<target>/` and `docs/<target>/`.
 
 ## Philosophy
 
 - **Pure C99**: `-std=c99 -pedantic` — no extensions, no C11+
-- **Memory Arena**: single `malloc` per arena, bulk `free` — zero leaks by design
+- **Memory Arena**: hardened allocator — aligned, overflow-safe, double-init guard
 - **No recursion**: iteration only — predictable stack usage
-- **Zero tolerance**: `-Werror -Wall -Wextra -Wconversion -Wshadow` — no warnings allowed
+- **Zero tolerance**: `-Werror -Wall -Wextra -Wconversion -Wshadow` — no warnings
+- **`-fanalyzer`**: GCC compile-time static analysis (GCC ≥ 10)
 - **Valgrind mandatory**: every test run checks for leaks and memory errors
+- **Hardened Release**: `-O2 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fPIE`
 - **Git mandatory**: every project starts with version control
 - **Containerized**: builds never touch the host — fully reproducible
+- **AGENTS.md**: generated in every project — AI agents auto-follow rules
 
 ## Available Actions
 
 ### 1. Initialize a project
 
-Run the init script to scaffold a new C99 project in the current directory:
-
 ```bash
 bash SKILL_DIR/scripts/init_project.sh
 ```
 
-This creates: `src/`, `include/`, `tests/`, `containers/`, `CMakeLists.txt`,
-`.gitignore`, template source files (memory arena, utils, main, tests), and
-initializes a git repository with an initial commit.
+Creates: `src/`, `include/`, `tests/`, `containers/`, `CMakeLists.txt`,
+`.gitignore`, `AGENTS.md`, template source files, and a git repository.
 
 **Do not run init in a directory that already has source files.**
 
@@ -52,9 +51,7 @@ bash SKILL_DIR/scripts/build.sh <target> [Debug|Release]
 
 Targets: `rhel8`, `rhel9`, `rhel10`, `debian11`, `debian12`, `ubuntu2204`, `ubuntu2404`
 
-Default build type is `Debug`. The script builds a Podman image for the target
-(if not cached) and compiles inside the container. The `build/` directory is
-created in the project root.
+Output goes to `build/<target>/`. Multiple targets coexist.
 
 ### 3. Test with Valgrind
 
@@ -62,9 +59,8 @@ created in the project root.
 bash SKILL_DIR/scripts/test.sh <target>
 ```
 
-Builds with `BUILD_TESTS=ON`, runs `ctest`, then runs every test binary under
-Valgrind with `--leak-check=full --error-exitcode=1`. Any leak or memory error
-is a hard failure.
+Builds with `BUILD_TESTS=ON` into `build/<target>/`, runs `ctest`, then
+Valgrind with `--leak-check=full --error-exitcode=1`. Any leak = hard failure.
 
 ### 4. Static analysis
 
@@ -72,8 +68,7 @@ is a hard failure.
 bash SKILL_DIR/scripts/static_analysis.sh <target>
 ```
 
-Runs `clang-tidy` inside the target container on all `.c` files in `src/` and
-`include/`.
+Runs `clang-tidy` inside the target container with `--warnings-as-errors`.
 
 ### 5. Generate documentation
 
@@ -81,40 +76,52 @@ Runs `clang-tidy` inside the target container on all `.c` files in `src/` and
 bash SKILL_DIR/scripts/docs.sh <target>
 ```
 
-Runs Doxygen inside the target container. Output goes to `docs/`.
+Doxygen output goes to `docs/<target>/`.
 
 ## Target Catalog
 
-| Target      | Family | Base Image        |
-|-------------|--------|-------------------|
-| `rhel8`     | RHEL   | `rockylinux:8`    |
-| `rhel9`     | RHEL   | `rockylinux:9`    |
-| `rhel10`    | RHEL   | `rockylinux:10`   |
-| `debian11`  | Debian | `debian:bullseye` |
-| `debian12`  | Debian | `debian:bookworm` |
-| `ubuntu2204`| Debian | `ubuntu:22.04`    |
-| `ubuntu2404`| Debian | `ubuntu:24.04`    |
+| Target      | Family | Base Image        | `-fanalyzer` |
+|-------------|--------|-------------------|:------------:|
+| `rhel8`     | RHEL   | `rockylinux:8`    | — |
+| `rhel9`     | RHEL   | `rockylinux:9`    | ✅ |
+| `rhel10`    | RHEL   | `quay.io/rockylinux/rockylinux:10` | ✅ |
+| `debian11`  | Debian | `debian:bullseye` | ✅ |
+| `debian12`  | Debian | `debian:bookworm` | ✅ |
+| `ubuntu2204`| Ubuntu | `ubuntu:22.04`    | ✅ |
+| `ubuntu2404`| Ubuntu | `ubuntu:24.04`    | ✅ |
 
 See [references/TARGETS.md](references/TARGETS.md) for full details.
 
+## Compiler Flags
+
+| | Debug | Release |
+|---|---|---|
+| Optimization | `-O0` | `-O2` |
+| Debug info | `-g3` | — |
+| Warnings | `-Wall -Wextra -Werror -Wconversion -Wshadow -pedantic` | same |
+| Static analysis | `-fanalyzer` (GCC ≥ 10) | — |
+| Stack protection | `-fstack-protector-strong` | `-fstack-protector-strong` |
+| Buffer overflow | — | `-D_FORTIFY_SOURCE=2` |
+| PIE | — | `-fPIE` |
+
 ## Framework Rules
 
-1. All code must compile with `-std=c99 -pedantic -Wall -Wextra -Werror -Wconversion -Wsign-conversion -Wshadow -Wfloat-conversion`
+1. All code compiles with `-std=c99 -pedantic -Werror` and all warning flags
 2. No recursion — use iteration (loops, explicit stacks)
-3. Memory management via arena only — no direct `malloc`/`free` in application code
-4. All tests must pass Valgrind with zero leaks and zero errors
+3. Memory via arena only — no direct `malloc`/`free` in application code
+4. All tests pass Valgrind with zero leaks and zero errors
 5. Git repository required — init creates the first commit
-6. All builds run inside Podman containers — never compile on host
+6. All builds inside Podman containers — never on host
 
-See [references/RULES.md](references/RULES.md) for rationale and examples.
+See [references/RULES.md](references/RULES.md) for rationale.
 
 ## Memory Arena API
 
 ```c
-int   mem_arena_init(MemArena *arena, size_t size);  // returns 0 on success
-void *mem_arena_alloc(MemArena *arena, size_t size);  // returns NULL on failure
-void  mem_arena_reset(MemArena *arena);               // resets used to 0
-void  mem_arena_free(MemArena *arena);                // frees backing memory
+int   mem_arena_init(MemArena *arena, size_t size);  // aligned, overflow-safe
+void *mem_arena_alloc(MemArena *arena, size_t size);  // aligned to MEM_ARENA_ALIGN
+void  mem_arena_reset(MemArena *arena);               // reuse without freeing
+void  mem_arena_free(MemArena *arena);                // idempotent
 ```
 
 See [references/ARENA_API.md](references/ARENA_API.md) for full documentation.
@@ -123,9 +130,10 @@ See [references/ARENA_API.md](references/ARENA_API.md) for full documentation.
 
 ```
 my-project/
+├── AGENTS.md
 ├── CMakeLists.txt
-├── .gitignore
 ├── Doxyfile
+├── .gitignore
 ├── containers/
 │   ├── Containerfile.rhel
 │   └── Containerfile.debian
@@ -136,8 +144,10 @@ my-project/
 ├── include/
 │   ├── mem_arena.h
 │   └── utils.h
-└── tests/
-    └── test_arena.c
+├── tests/
+│   └── test_arena.c
+├── build/<target>/          # per-target output
+└── docs/<target>/           # per-target docs
 ```
 
 ## SKILL_DIR
