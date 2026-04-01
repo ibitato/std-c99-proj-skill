@@ -40,9 +40,15 @@ void *mem_arena_alloc(MemArena *arena, size_t size) {
     if (arena == NULL || arena->memory == NULL || size == 0) {
         return NULL;
     }
-    aligned = align_up(size);
-    /* Overflow check: aligned < size means wrap-around */
-    if (aligned < size || arena->used > arena->size - aligned) {
+    /* Overflow check on alignment padding */
+    aligned = (size + MEM_ARENA_ALIGN - 1) & ~(MEM_ARENA_ALIGN - 1);
+    if (aligned < size) {
+        /* align_up wrapped around */
+        (void)fprintf(stderr, "arena: request too large (%zu bytes)\n", size);
+        return NULL;
+    }
+    /* Overflow-safe capacity check: avoid used + aligned overflow */
+    if (aligned > arena->size || arena->used > arena->size - aligned) {
         (void)fprintf(stderr, "arena: out of space (need %zu, have %zu)\n",
                        size, arena->size - arena->used);
         return NULL;
