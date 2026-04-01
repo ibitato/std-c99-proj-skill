@@ -17,6 +17,12 @@ for check in src include tests CMakeLists.txt; do
     fi
 done
 
+# Guard against existing git repo
+if [ -d ".git" ]; then
+    echo "Error: .git already exists. Use an empty directory."
+    exit 1
+fi
+
 echo "==> Initializing pure ANSI C99 project..."
 
 # Create directories

@@ -30,23 +30,39 @@ in `build/<target>/` and `docs/<target>/`.
 - **Containerized**: builds never touch the host — fully reproducible
 - **AGENTS.md**: generated in every project — AI agents auto-follow rules
 
+## Invoking Scripts
+
+Scripts are in this skill's `scripts/` directory. **Use the full absolute path**
+to each script. Do NOT use `SKILL_DIR` as a shell variable — resolve the path
+from this SKILL.md's location first.
+
+Example: if this file is at `/home/user/.nvm/.../std-c99-proj/SKILL.md`,
+then scripts are at `/home/user/.nvm/.../std-c99-proj/scripts/`.
+
+Always `cd` to the project directory first, then call the script with its
+full path.
+
 ## Available Actions
 
 ### 1. Initialize a project
 
+From an **empty directory** (no `.git`, no `src/`):
+
 ```bash
-bash SKILL_DIR/scripts/init_project.sh
+cd /path/to/new-project
+/full/path/to/std-c99-proj/scripts/init_project.sh
 ```
 
-Creates: `src/`, `include/`, `tests/`, `containers/`, `CMakeLists.txt`,
-`.gitignore`, `AGENTS.md`, template source files, and a git repository.
+Creates: `AGENTS.md`, `src/`, `include/`, `tests/`, `containers/`,
+`CMakeLists.txt`, `.gitignore`, template source files, and a git repository.
 
-**Do not run init in a directory that already has source files.**
+**Refuses to run** if the directory already has `.git`, `src/`, `include/`,
+`tests/`, or `CMakeLists.txt`.
 
 ### 2. Build
 
 ```bash
-bash SKILL_DIR/scripts/build.sh <target> [Debug|Release]
+/full/path/to/std-c99-proj/scripts/build.sh <target> [Debug|Release]
 ```
 
 Targets: `rhel8`, `rhel9`, `rhel10`, `debian11`, `debian12`, `ubuntu2204`, `ubuntu2404`
@@ -56,7 +72,7 @@ Output goes to `build/<target>/`. Multiple targets coexist.
 ### 3. Test with Valgrind
 
 ```bash
-bash SKILL_DIR/scripts/test.sh <target>
+/full/path/to/std-c99-proj/scripts/test.sh <target>
 ```
 
 Builds with `BUILD_TESTS=ON` into `build/<target>/`, runs `ctest`, then
@@ -65,7 +81,7 @@ Valgrind with `--leak-check=full --error-exitcode=1`. Any leak = hard failure.
 ### 4. Static analysis
 
 ```bash
-bash SKILL_DIR/scripts/static_analysis.sh <target>
+/full/path/to/std-c99-proj/scripts/static_analysis.sh <target>
 ```
 
 Runs `clang-tidy` inside the target container with `--warnings-as-errors`.
@@ -73,7 +89,7 @@ Runs `clang-tidy` inside the target container with `--warnings-as-errors`.
 ### 5. Generate documentation
 
 ```bash
-bash SKILL_DIR/scripts/docs.sh <target>
+/full/path/to/std-c99-proj/scripts/docs.sh <target>
 ```
 
 Doxygen output goes to `docs/<target>/`.
@@ -150,7 +166,3 @@ my-project/
 └── docs/<target>/           # per-target docs
 ```
 
-## SKILL_DIR
-
-When referencing scripts and assets, `SKILL_DIR` is the directory containing
-this `SKILL.md` file. The agent should resolve it before running commands.
