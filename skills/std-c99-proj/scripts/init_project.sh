@@ -35,6 +35,7 @@ cp "$TEMPLATES/CMakeLists.txt" .
 cp "$TEMPLATES/Doxyfile"     .
 cp "$TEMPLATES/.gitignore"   . 2>/dev/null \
     || cp "$TEMPLATES/gitignore.template" .gitignore
+cp "$TEMPLATES/AGENTS.md"   .
 
 # Copy containerfiles
 cp "$CONTAINERS/Containerfile.rhel"   containers/
