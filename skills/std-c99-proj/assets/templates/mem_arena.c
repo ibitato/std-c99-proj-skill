@@ -12,11 +12,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/** Round \p n up to the next multiple of MEM_ARENA_ALIGN. */
-static size_t align_up(size_t n) {
-    return (n + MEM_ARENA_ALIGN - 1) & ~(MEM_ARENA_ALIGN - 1);
-}
-
 int mem_arena_init(MemArena *arena, size_t size) {
     if (arena == NULL || size == 0) {
         return -1;
