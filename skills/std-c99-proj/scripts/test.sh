@@ -12,11 +12,10 @@ if [ -z "$TARGET" ]; then
     exit 1
 fi
 
-# Resolve target — same mapping as build.sh
 case "$TARGET" in
-    rhel8)      CFILE="containers/Containerfile.rhel";   BUILD_ARG="VERSION=8";;
-    rhel9)      CFILE="containers/Containerfile.rhel";   BUILD_ARG="VERSION=9";;
-    rhel10)     CFILE="containers/Containerfile.rhel";   BUILD_ARG="VERSION=10";;
+    rhel8)      CFILE="containers/Containerfile.rhel";   BUILD_ARG="BASE_IMAGE=rockylinux:8";;
+    rhel9)      CFILE="containers/Containerfile.rhel";   BUILD_ARG="BASE_IMAGE=rockylinux:9";;
+    rhel10)     CFILE="containers/Containerfile.rhel";   BUILD_ARG="BASE_IMAGE=quay.io/rockylinux/rockylinux:10";;
     debian11)   CFILE="containers/Containerfile.debian"; BUILD_ARG="BASE_IMAGE=debian:bullseye";;
     debian12)   CFILE="containers/Containerfile.debian"; BUILD_ARG="BASE_IMAGE=debian:bookworm";;
     ubuntu2204) CFILE="containers/Containerfile.debian"; BUILD_ARG="BASE_IMAGE=ubuntu:22.04";;

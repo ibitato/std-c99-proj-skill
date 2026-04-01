@@ -1,5 +1,5 @@
-ARG VERSION=9
-FROM rockylinux:${VERSION}
+ARG BASE_IMAGE=rockylinux:9
+FROM ${BASE_IMAGE}
 
 # Enable EPEL and CRB/PowerTools for doxygen and clang-tools-extra
 RUN dnf install -y epel-release \
