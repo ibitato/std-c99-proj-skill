@@ -1,6 +1,12 @@
 ARG VERSION=9
 FROM rockylinux:${VERSION}
 
+# Enable EPEL and CRB/PowerTools for doxygen and clang-tools-extra
+RUN dnf install -y epel-release \
+    && dnf config-manager --set-enabled crb 2>/dev/null \
+    || dnf config-manager --set-enabled powertools 2>/dev/null \
+    || true
+
 RUN dnf install -y \
         gcc \
         clang \
