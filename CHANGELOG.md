@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-04-01
+
+### Added
+- Memory arena hardening: aligned allocations (`MEM_ARENA_ALIGN`), integer overflow
+  protection, double-init guard
+- 11 new test assertions (27 total): alignment, overflow, double-init, alloc-after-free
+- Comprehensive user manual (`MANUAL.md`) — beginner / intermediate / advanced
+- RHEL 10 support via `quay.io/rockylinux/rockylinux:10`
+
+### Changed
+- Containerfile.rhel uses `ARG BASE_IMAGE` (same pattern as Debian) for flexible registries
+- EPEL and CRB/PowerTools repos enabled automatically in RHEL containers
+- All scripts use unified `BASE_IMAGE` target mapping
+
+### Fixed
+- Scripts missing execute permissions
+- `doxygen` unavailable in default Rocky Linux repos (now via EPEL)
+- `rockylinux:10` not on Docker Hub (now uses quay.io)
+- `align_up` wrap-around on near-`SIZE_MAX` allocations
+- Unused `align_up` function triggering `-Werror=unused-function`
+
 ## [2.0.0] - 2026-04-01
 
 ### Added

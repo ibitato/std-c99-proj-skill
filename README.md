@@ -5,7 +5,7 @@
 **Professional framework for pure ANSI C99 projects — as a [Pi](https://github.com/badlogic/pi-mono) skill.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Pi Package](https://img.shields.io/badge/pi--package-v2.0.0-orange.svg)](https://github.com/ibitato/std-c99-proj-skill)
+[![Pi Package](https://img.shields.io/badge/pi--package-v2.1.0-orange.svg)](https://github.com/ibitato/std-c99-proj-skill)
 [![Agent Skills](https://img.shields.io/badge/Agent_Skills-standard-green.svg)](https://agentskills.io)
 [![C Standard](https://img.shields.io/badge/C-C99-informational.svg)]()
 [![Podman](https://img.shields.io/badge/Podman-containerized-purple.svg)](https://podman.io)
